@@ -18,7 +18,7 @@ type pit struct{
 	start string
 	end string
 	added int64
-	conv bin.Converter
+	wc bin.WordConv
 }
 
 func NewLabeler(ws io.WriteSeeker) *Labeler {
@@ -46,7 +46,7 @@ func (laber *Labeler) Label(l string) error {
 	return nil
 }
 
-func (laber *Labeler) Pit(startLabel string, endLabel string, added int64, conv bin.Converter) (int, error) {
+func (laber *Labeler) Pit(startLabel string, endLabel string, added int64, wc bin.WordConv) (int, error) {
 	addr, err := laber.ws.Seek(0, 1)
 	if err != nil {
 		return 0, err
@@ -57,9 +57,9 @@ func (laber *Labeler) Pit(startLabel string, endLabel string, added int64, conv 
 		start: startLabel,
 		end: endLabel,
 		added: added,
-		conv: conv,
+		wc: wc,
 	})
-	return laber.ws.Write(conv(0))
+	return laber.ws.Write(wc(0))
 }
 
 func (laber *Labeler) Close() error {
@@ -97,7 +97,7 @@ func (laber *Labeler) Close() error {
 			return err
 		}
 
-		laber.ws.Write(laber.pits[i].conv(n))
+		laber.ws.Write(laber.pits[i].wc(n))
 	}
 
 	_, err = laber.ws.Seek(current, 0)
