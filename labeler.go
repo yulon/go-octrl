@@ -36,14 +36,22 @@ func NewLabeler(ws io.WriteSeeker) *Labeler {
 	return laber
 }
 
-func (laber *Labeler) Label(l string) error {
+func (laber *Labeler) Label(label string) error {
 	offset, err := laber.ws.Seek(0, 1)
 	if err != nil {
 		return err
 	}
 
-	laber.labs[l] = offset
+	laber.labs[label] = offset
 	return nil
+}
+
+func (laber *Labeler) Get(label string) (int64, error) {
+	off, ok := laber.labs[label]
+	if !ok {
+		return 0, errors.New(label + " undefined")
+	}
+	return off, nil
 }
 
 func (laber *Labeler) Pit(startLabel string, endLabel string, added int64, wc bin.WordConv) (int, error) {
@@ -70,23 +78,23 @@ func (laber *Labeler) Close() error {
 
 	for i := 0; i < len(laber.pits); i++ {
 		var start, end int64
-		var ok bool
+		var err error
 
 		if laber.pits[i].start == "" {
 			start = laber.base
 		}else{
-			start, ok = laber.labs[laber.pits[i].start]
-			if !ok {
-				return errors.New(laber.pits[i].start + " is not found")
+			start, err = laber.Get(laber.pits[i].start)
+			if err != nil {
+				return err
 			}
 		}
 
 		if laber.pits[i].end == "" {
 			end = laber.pits[i].addr
 		}else{
-			end, ok = laber.labs[laber.pits[i].end]
-			if !ok {
-				return errors.New(laber.pits[i].end + " is not found")
+			end, err = laber.Get(laber.pits[i].end)
+			if err != nil {
+				return err
 			}
 		}
 
